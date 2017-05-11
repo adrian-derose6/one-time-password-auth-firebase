@@ -16,13 +16,17 @@ module.exports = function(req, res) {
   admin.auth().getUser(phone)
     .then(() => {
       // Fetch data model corresponding to user
-      admin.database().ref('users/' + phone).on('value', snapshot => {
+      const ref = admin.database().ref('users/' + phone)
+      ref.on('value', snapshot => {
         const user = snapshot.val();
 
         // Check if verification code from user request matches with the code in the database
         if (user.code !== code || !user.codeValid) {
           return res.status(422).send({ error: 'Code not valid' });
         }
+
+        // Invalidate verification code inside the database.
+        ref.update({ codeValid: false });
       });
     })
     .catch((err) => {
